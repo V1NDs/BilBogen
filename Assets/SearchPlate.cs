@@ -15,7 +15,27 @@ public class SearchPlate : MonoBehaviour
     {
         var carPlate = plateInput.GetComponent<TMP_InputField>().text;
 
-        StartCoroutine(GetRequest("https://www.nummerplade.net/nummerplade/" + carPlate + ".html"));
+//        StartCoroutine(GetRequest("https://www.nummerplade.net/nummerplade/" + carPlate + ".html"));
+        StartCoroutine(GetText("https://www.nummerplade.net/nummerplade/" + carPlate + ".html"));
+    }
+
+    IEnumerator GetText(string website)
+    {
+        UnityWebRequest www = UnityWebRequest.Get(website);
+        yield return www.SendWebRequest();
+
+        if (www.result != UnityWebRequest.Result.Success)
+        {
+            Debug.Log(www.error);
+        }
+        else
+        {
+            // Show results as text
+            Debug.Log(www.downloadHandler.text);
+
+            // Or retrieve results as binary data
+            byte[] results = www.downloadHandler.data;
+        }
     }
 
     IEnumerator GetRequest(string uri)
@@ -31,6 +51,7 @@ public class SearchPlate : MonoBehaviour
             switch (webRequest.result)
             {
                 case UnityWebRequest.Result.ConnectionError:
+                    break;
                 case UnityWebRequest.Result.DataProcessingError:
                     Debug.LogError(pages[page] + ": Error: " + webRequest.error);
                     break;
@@ -39,6 +60,9 @@ public class SearchPlate : MonoBehaviour
                     break;
                 case UnityWebRequest.Result.Success:
                     Debug.Log(pages[page] + ":\nReceived: " + webRequest.downloadHandler.text);
+                    break;
+                default:
+                    Debug.LogError("error");
                     break;
             }
         }
