@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml.Linq;
 using TMPro;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
@@ -10,61 +11,50 @@ using UnityEngine.UI;
 public class SearchPlate : MonoBehaviour
 {
     public GameObject plateInput;
+    public GameObject modelText;
+    public CarStore carStore = new();
+
+    public void Start()
+    {
+        string filePath = Application.persistentDataPath + "/cars.json";
+        string cars = System.IO.File.ReadAllText(filePath);
+
+        carStore = JsonUtility.FromJson<CarStore>(cars);
+    }
 
     public void Search()
     {
         var carPlate = plateInput.GetComponent<TMP_InputField>().text;
 
-//        StartCoroutine(GetRequest("https://www.nummerplade.net/nummerplade/" + carPlate + ".html"));
-        StartCoroutine(GetText("https://www.nummerplade.net/nummerplade/" + carPlate + ".html"));
-    }
+        Debug.Log(carPlate);
 
-    IEnumerator GetText(string website)
-    {
-        UnityWebRequest www = UnityWebRequest.Get(website);
-        yield return www.SendWebRequest();
-
-        if (www.result != UnityWebRequest.Result.Success)
+        for (int i = 0; i < carStore.vehicles.Count; i++)
         {
-            Debug.Log(www.error);
-        }
-        else
-        {
-            // Show results as text
-            Debug.Log(www.downloadHandler.text);
-
-            // Or retrieve results as binary data
-            byte[] results = www.downloadHandler.data;
-        }
-    }
-
-    IEnumerator GetRequest(string uri)
-    {
-        using (UnityWebRequest webRequest = UnityWebRequest.Get(uri))
-        {
-            // Request and wait for the desired page.
-            yield return webRequest.SendWebRequest();
-
-            string[] pages = uri.Split('/');
-            int page = pages.Length - 1;
-
-            switch (webRequest.result)
+            if (carStore.vehicles[i].licensePlate == carPlate.ToUpper())
             {
-                case UnityWebRequest.Result.ConnectionError:
-                    break;
-                case UnityWebRequest.Result.DataProcessingError:
-                    Debug.LogError(pages[page] + ": Error: " + webRequest.error);
-                    break;
-                case UnityWebRequest.Result.ProtocolError:
-                    Debug.LogError(pages[page] + ": HTTP Error: " + webRequest.error);
-                    break;
-                case UnityWebRequest.Result.Success:
-                    Debug.Log(pages[page] + ":\nReceived: " + webRequest.downloadHandler.text);
-                    break;
-                default:
-                    Debug.LogError("error");
-                    break;
+                Debug.Log(carStore.vehicles[i].model);
+                modelText.GetComponent<TMP_Text>().text = carStore.vehicles[i].brand + " " + carStore.vehicles[i].model;
+
+                break;
             }
         }
     }
+}
+
+[Serializable]
+public class CarStore
+{
+    public List<CarInformation> vehicles = new();
+}
+
+[Serializable]
+public class CarInformation
+{
+    public string licensePlate;
+    public string brand;
+    public string model;
+    public string variant;
+    public string vin;
+    public int year;
+    public string registered;
 }
